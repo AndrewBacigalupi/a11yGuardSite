@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html title="a11y" lang="en">
       <body className="antialiased">
         {children}
       </body>
