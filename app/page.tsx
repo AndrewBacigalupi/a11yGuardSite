@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { HeroGraphic } from "@/components/hero-graphic";
+import { Copy } from 'lucide-react';
+
 
 const fadeInUp = {
   initial: { opacity: 0, y: 24 },
@@ -15,6 +18,47 @@ const fadeInUp = {
 };
 
 export default function Home() {
+  const workflowYaml = `name: Accessibility Regression Check
+
+on:
+  pull_request:
+
+jobs:
+  a11y:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Run accessibility check
+        uses: zachkklein/WCAG_PR_Checker@main
+        with:
+          APP_DIR: '.'
+          BUILD_DIR: 'public'
+          URLS: '/'
+          OPENROUTER_API_KEY: \${{ secrets.OPENROUTER_API_KEY }}`;
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyWorkflow = async () => {
+    try {
+      await navigator.clipboard.writeText(workflowYaml);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = workflowYaml;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white text-foreground">
       {/* Nav - large, translucent, bold logo + two buttons */}
@@ -68,12 +112,12 @@ export default function Home() {
               compliant—without punishing existing debt.
             </p>
             <div className="mt-10 flex flex-wrap items-center justify-center gap-5">
-              <Button size="lg" className="h-16 min-w-[200px] px-10 text-xl md:h-20 md:min-w-[220px] md:px-12 md:text-2xl" asChild>
+              <Button size="lg" className="h-16 min-w-[150px] px-10 text-xl md:h-20 md:min-w-[150px] md:px-12 md:text-2xl" asChild>
                 <a href="#setup" className="no-underline">
                   Get started
                 </a>
               </Button>
-              <Button size="lg" variant="outline" className="h-16 min-w-[200px] px-10 text-xl border-foreground/20 bg-white hover:bg-muted md:h-20 md:min-w-[220px] md:px-12 md:text-2xl" asChild>
+              <Button size="lg" variant="outline" className="h-16 min-w-[150px] px-10 text-xl border-foreground/20 bg-white hover:bg-muted md:h-20 md:min-w-[150px] md:px-12 md:text-2xl" asChild>
                 <Link href="/creators">Meet the team</Link>
               </Button>
             </div>
@@ -84,7 +128,6 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            <HeroGraphic />
           </motion.div>
         </section>
 
@@ -112,25 +155,25 @@ export default function Home() {
 
         {/* How it works - mild tint */}
         <section id="how-it-works" className="border-y border-border/50 px-6 py-24 md:py-32" style={{ background: "var(--section-mild)" }}>
-          <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-6xl">
             <motion.h2
               className="mb-12 text-center text-4xl font-bold tracking-tight text-foreground md:text-5xl"
               {...fadeInUp}
             >
               How It Works
             </motion.h2>
-            <ol className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
+            <ol className="grid gap-12 md:gap-14 md:grid-cols-2">
               {[
                 "Builds base branch and PR branch on every PR.",
                 "Runs axe-core on both via Playwright.",
-                "Diffs results—new violations flagged, resolved ones celebrated.",
-                "Posts a structured comment and optionally fails the check.",
+                "Diffs results—new violations flagged, resolved ones highlighted and accepted.",
+                "Posts a structured comment and Gemini-3 reviews the violations and resolves the issues.",
               ].map((step, i) => (
                 <motion.li
                   key={step}
                   {...fadeInUp}
                   transition={{ delay: i * 0.08 }}
-                  className="flex gap-16"
+                  className="flex items-start gap-6 md:gap-8"
                 >
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground shadow md:h-20 md:w-20 md:text-3xl">
                     {i + 1}
@@ -167,111 +210,44 @@ export default function Home() {
               </p>
             </motion.div>
             <motion.div
-              className="overflow-x-auto rounded-xl border-2 border-primary/20 bg-white/80 p-6 shadow-lg"
+              className="relative overflow-x-auto rounded-xl border-2 border-primary/20 bg-white/80 p-6 pr-16 shadow-lg"
               {...fadeInUp}
             >
+              <button
+                type="button"
+                onClick={handleCopyWorkflow}
+                className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-md bg-transparent text-slate-500 transition hover:text-slate-400 focus-visible:outline-none"
+                aria-label={copied ? "Copied workflow to clipboard" : "Copy workflow to clipboard"}
+                title={copied ? "Copied" : "Copy"}
+              >
+                <Copy />
+              </button>
+              <div
+                role="status"
+                aria-live="polite"
+                className={`pointer-events-none absolute right-4 top-14 rounded-full bg-white/95 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm transition ${
+                  copied ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
+                }`}
+              >
+                Copied
+              </div>
               <pre className="text-base text-slate-800 whitespace-pre md:text-lg">
-                {`name: Accessibility Regression Check
-
-on:
-  pull_request:
-
-jobs:
-  a11y:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - uses: zachkklein/WCAG_PR_Checker@main
-        with:
-          APP_DIR: '.'
-          BUILD_DIR: 'dist'
-          URLS: '/,/about,/dashboard'`}
+                {workflowYaml}
               </pre>
             </motion.div>
-
-            <motion.div className="mt-10 grid gap-6 md:grid-cols-2" {...fadeInUp}>
-              <Card className="border-2 border-border bg-white shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-xl">Inputs (optional)</CardTitle>
-                  <CardDescription className="text-base text-slate-700">
-                    APP_DIR, BUILD_DIR, BUILD_COMMAND, URLS, FAIL_ON_REGRESSION, IMPACT_LEVEL, etc. See the{" "}
-                    <a
-                      href="https://github.com/zachkklein/WCAG_PR_Checker"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary font-medium underline underline-offset-2 hover:no-underline"
-                    >
-                      a11y-diff repo
-                    </a>{" "}
-                    for full docs.
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-              <Card className="border-2 border-border bg-white shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-xl">Frameworks</CardTitle>
-                  <CardDescription className="text-base text-slate-700">
-                    Vite: dist. Next.js: out + output: &apos;export&apos;. CRA: build. Subdir: set APP_DIR (e.g. frontend).
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              className="mt-8 rounded-xl border-2 border-primary/30 bg-white/90 p-6"
-              {...fadeInUp}
-            >
-              <p className="text-lg font-medium text-foreground">Report-only mode</p>
-              <p className="mt-2 text-base text-slate-600">
-                Set{" "}
-                <code className="rounded bg-muted px-1 py-0.5">FAIL_ON_REGRESSION: &apos;false&apos;</code> to post
-                comments without failing the build.
-              </p>
-            </motion.div>
-
             <motion.div
               className="mt-8 rounded-xl text-center border-2 border-primary/30 bg-white/90 p-6"
               {...fadeInUp}
             >
-              <p className="text-4xl font-medium text-foreground">Check Out Our <a href="https://github.com/zachkklein/WCAG_PR_Checker" className="font-bold hover:text-gray-400 ">Source</a> on GitHub</p>
+              <p className="text-2xl text-foreground">For more details on inputs and customizations, find us on <a href="https://github.com/marketplace/actions/a11y-diff" className="font-bold hover:underline ">GitHub Marketplace</a></p>
               
-            </motion.div>
-          </div>
-        </section>
-
-        {/* CTA - white */}
-        <section className="bg-white px-6 py-20 md:py-24">
-          <div className="mx-auto max-w-3xl text-center">
-            <motion.p className="text-xl text-slate-800 md:text-2xl" {...fadeInUp}>
-              a11yGuard is built on the{" "}
-              <a
-                href="https://github.com/zachkklein/WCAG_PR_Checker"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-accent underline underline-offset-2 hover:no-underline"
-              >
-                a11y-diff
-              </a>{" "}
-              approach: detect regressions between PRs without punishing existing debt.
-            </motion.p>
-            <motion.div className="mt-8" {...fadeInUp}>
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-foreground/25 bg-white hover:bg-muted"
-                asChild
-              >
-                <Link href="/creators">Meet the creators</Link>
-              </Button>
             </motion.div>
           </div>
         </section>
       </main>
 
       <footer className="border-t border-border bg-white py-6">
-        <div className="mx-auto max-w-5xl px-6 text-center text-sm text-slate-600">
+        <div className="mx-auto max-w-5xl px-6 text-center text-xl text-slate-600">
           <Link href="/creators" className="text-primary hover:underline">
             Creators
           </Link>
